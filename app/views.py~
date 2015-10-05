@@ -1,0 +1,142 @@
+from flask import render_template, request, redirect, url_for, send_from_directory, jsonify
+from app import app
+import pymysql as mdb
+import sqlalchemy
+import pandas as pd
+import psycopg2
+from werkzeug import secure_filename
+from flask import send_from_directory
+import os
+import subprocess
+import match_petfinder
+import pull_human
+import pickle
+import random
+import string
+
+sys_args = pickle.load( open("api_config.p", "rb") ) #load in private settings
+
+db = psycopg2.connect(user=sys_args['user'], database=sys_args['database'])
+
+# not used
+@app.route('/index')
+def index():
+    return render_template("index.html",title='kittyTwin')
+
+# not used
+@app.route('/db')
+def kitty_info_page():
+    city = 'Los Angeles'
+    with db:
+        cur = db.cursor()
+        sql_query = """
+SELECT name FROM name_data_table WHERE id IN(
+SELECT id FROM contact_info_data_table WHERE city='Los Angeles');
+"""
+        query_results = pd.read_sql_query(sql_query,db)
+        cats = "there are " + str(query_results.shape[0]) + " cats with detectable faces in " + city + " shelters."
+        return cats
+#        return query_results.loc[1][0]
+
+# not used
+@app.route('/db_fancy')
+def kitty_page_fancy():
+    city = 'Los Angeles'
+    with db:
+        cur = db.cursor()
+        sql_query = """
+SELECT a.name, b.city, a.id
+FROM name_data_table a, contact_info_data_table b
+WHERE a.id=b.id LIMIT 15;
+"""
+        query_results = pd.read_sql_query(sql_query,db)
+        cats = []
+        for i in range(query_results.shape[0]):
+            cats.append(dict(name=query_results.loc[i][0],
+                             city=query_results.loc[i][1],
+                             website='https://www.petfinder.com/petdetail/' + str(query_results.loc[i][2])))
+        return render_template('pets.html',cats=cats)
+
+UPLOAD_FOLDER_RAW = 'app/raw/'
+UPLOAD_FOLDER_EDIT = 'app/edit/'
+ALLOWED_EXTENSIONS = set(['jpg','jpeg','JPEG','JPG'])
+
+app.config['UPLOAD_RAW_DEST'] = UPLOAD_FOLDER_RAW
+app.config['UPLOAD_EDIT_DEST'] = UPLOAD_FOLDER_EDIT
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
+#photos_raw = UploadSet('photos', IMAGES)
+#configure_uploads(app, photos_raw)
+#photos = UploadSet('photos',IMAGES)
+#configure_uploads(app,photos)
+
+# check file is ok
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+# create random filename
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
+
+@app.route('/',methods=['GET','POST'])
+def upload_file():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and allowed_file(file.filename):
+            file.filename = str(id_generator(size = 12)) + '.jpg'
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_RAW_DEST'],filename))
+            print filename
+            return redirect(url_for('report_match',filename=filename))
+    return render_template('input.html')
+
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
+
+@app.route('/output/<filename>')
+def report_match(filename):
+    #get location of saved file
+    filepath = os.path.join(app.config['UPLOAD_RAW_DEST'],filename)
+    print filepath
+    print app.config['UPLOAD_RAW_DEST']
+    #process saved file
+    human = pull_human.pull_human(filepath,app.config['UPLOAD_EDIT_DEST'])
+    if human == -1:
+        return redirect(url_for('no_face_detected'))
+    else:
+    #match to database
+    #make these NOT hard-coded
+        matched_cat = match_petfinder.match_faces(image=human, 
+                                              threshold=100000, 
+                                              model_name="eigenModel.xml")
+        with db:
+            print "matched cat: " + matched_cat
+            cur = db.cursor()
+            sql_query = "SELECT a.id, a.name, a.picture, b.city FROM name_data_table a join contact_info_data_table b on a.id=b.id where b.id='" + matched_cat + "';"
+            query_results = pd.read_sql_query(sql_query,db)
+            name=query_results.loc[0][1]
+            image=query_results.loc[0][2]
+            city=query_results.loc[0][3]
+            website='https://www.petfinder.com/petdetail/' + str(query_results.loc[0][0])
+            to_image = "/static/images/" + filename
+        print "filepath: " + str(filepath)
+        return render_template("output.html",
+                           filepath=os.path.join(os.getcwd(),filepath), 
+                           newpic = image,
+                           name=name,
+                           city=city,
+                           website=website)
+
+
+@app.route('/retry',methods=['GET','POST'])
+def no_face_detected():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and allowed_file(file.filename):
+            file.filename = str(id_generator(size = 12)) + '.jpg'
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_RAW_DEST'],filename))
+            print filename
+            return redirect(url_for('report_match',filename=filename))
+    return render_template("re_enter.html") #this doesn't exist yet
+

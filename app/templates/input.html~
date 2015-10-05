@@ -1,0 +1,41 @@
+<!doctype html>
+<head lang="en">
+    <title>kittyTwin.me</title>
+    <link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,700' rel='stylesheet' type='text/css'>
+    <link href="static/css/bootstrap.css" rel="stylesheet"> <!-- Bootstrap CSS -->
+<div class="container">
+    <div class="content"></div>
+</div>​
+
+
+    <!-- Javascripts necessary for bootstrap to load -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="../static/js/bootstrap.min.js"></script>
+    <center><h1>Find my kittyTwin!</h1>
+    <center><img src = "static/images/banner.jpg" alt = "grumpy cat"
+                 style = "width:304px;height:228px;" align = "middle"></center>
+</head>
+
+<!--body style="background-color:#E6E6FA"-->
+<center><h2>Upload a frontal face image to start!</h2>
+<form action="" method=post enctype=multipart/form-data>
+  <p><input type=file name=file>
+    <br>
+    <input type=submit value="Find me my kittyTwin!" onclick="loading();">
+    </form></center>
+    <!--/body-->
+
+<script type="text/javascript">// <![CDATA[
+        function loading(){
+            $("#loading").show();
+            $("#content").hide();       
+        }
+// ]]></script>
+
+div#loading {
+    width: 35px;
+    height: 35px;
+    display: none;
+    background: ../static/images/loading.gif no-repeat;
+    cursor: wait;
+    }
