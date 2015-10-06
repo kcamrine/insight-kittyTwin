@@ -8,23 +8,39 @@
     <!-- Javascripts necessary for bootstrap to load -->
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="../static/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Cagliostro" />
+    <center><img src = "static/images/logo.jpg" alt= "logo"></center>
     <center><h1>Find my kittyTwin!</h1>
     <center><img src = "static/images/banner.jpg" alt = "grumpy cat"
                  style = "width:304px;height:228px;" align = "middle"></center>
 </head>
+
+<div id="search_mess">
+</div>
 
 <!--body style="background-color:#E6E6FA"-->
 <center><h2>Upload a frontal face image to start!</h2>
 <form action="" method=post enctype=multipart/form-data>
   <p><input type=file name=file>
     <br>
-    <input type=submit value="Find me my kittyTwin!" onclick="loading();">
+    <input type=submit value="Find me my kittyTwin!" name="submit_kt" id="submit_kt">
     </form></center>
     <!--/body-->
 
-<script type="text/javascript">// <![CDATA[
-        function loading(){
-            $("#loading").show();
-            $("#content").hide();       
-        }
-// ]]></script>
+<center><br> kittyTwin works on one human face at a time. If an image is submitted with <br>
+             more than one face, the clearer/larger face will be processed. <br>
+             kittyTwin will only match cats listed for adoption on Petfinder.com <br>
+             and is updated once a day with new listings. kittyTwin is an independent, <br>
+             entertainment-based site unaffiliated with Petfinder.com. Support your <br>
+             local animal shelter!</center>
+
+<script>
+
+var el = document.getElementById("submit_kt");
+var search_html_block = '<center> <img src="/static/images/loading.gif" style="width:304px;height:228px;"><br> Finding your kittyTwin now. This may take a moment...  </center> '
+
+el.addEventListener("click", function(){
+   document.getElementById("search_mess").innerHTML = search_html_block;
+});
+
+</script> 

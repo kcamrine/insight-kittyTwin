@@ -97,6 +97,10 @@ def report_match(filename):
 def show(id):
     return send_from_directory('/Users/kamrine/Documents/projects/Insight/insight-kittyTwin/app/raw/', id)
 
+@app.route('/gif/<id>')
+def show_loading(id):
+    return send_from_directory('/static/images', "loading.gif")
+
 
 
 @app.route('/retry',methods=['GET','POST'])
