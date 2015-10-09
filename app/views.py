@@ -39,22 +39,21 @@ def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
 # accept uploaded file
 @app.route('/',methods=['GET','POST'])
 def upload_file():
-    if request.method == 'POST':
-        file = request.files['file']
-        if file and allowed_file(file.filename):
-            file.filename = str(id_generator(size = 12)) + '.jpg'
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_RAW_DEST'],filename))
-            print filename
-            return redirect(url_for('report_match',filename=filename))
     return render_template('input.html')
 
 # create new filename
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
-@app.route('/output/<filename>')
-def report_match(filename):
+@app.route('/output',methods=['POST'])
+def report_match():
+    file = request.files['file']
+    if file and allowed_file(file.filename):
+        file.filename = str(id_generator(size = 12)) + '.jpg'
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_RAW_DEST'],filename))
+        print filename
+        #        return redirect(url_for('report_match',filename=filename))
     #get location of saved file
     print 'filename: ' + filename
     filepath = os.path.join(app.config['UPLOAD_RAW_DEST'],filename)
