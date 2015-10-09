@@ -12,7 +12,7 @@ import cv2
 import urllib
 from urlparse import urlparse
 import sys, os
-
+import pickle
 
 # Query away!
 #for shelter in api.shelter_find(location=zip_code, count=count):
@@ -61,10 +61,11 @@ def run_algo(pet):
             rects, img = detect("temp.jpg")
             #   Cut and keep
             face = box(rects, img, file_name) #save the cat face if detected with cat ID as filename
-            sub_image_detect += face
+            if face > 0:
+                return i
         else:
             print '404 - ' + line   
-    return sub_image_detect
+    return 0
 
 def write_DescTable(pet): #save descriptions
     fo = open("descriptions.txt", "ab")
@@ -72,9 +73,9 @@ def write_DescTable(pet): #save descriptions
     fo.write('%s,"%s"\n' %(str(pet['id']),unicode(description).encode('utf8')))
     fo.close()
     
-def write_nameTable(pet): #save pet name
+def write_nameTable(pet,sub_image_detect): #save pet name
     fo = open("names.txt","ab")
-    fo.write("%s,%s,%s\n" %(str(pet['id']),str(pet['name']),str(pet['photos'][0]['url'])))
+    fo.write("%s,%s,%s\n" %(str(pet['id']),str(pet['name']),str(pet['photos'][sub_image_detect]['url'])))
     fo.close()
     
 def write_contactInfo(pet): #save contact Information for shelter
@@ -84,8 +85,9 @@ def write_contactInfo(pet): #save contact Information for shelter
 
 def main():
     ###### set this to a file you don't upload to github before you upload (.gitignore)
-    api_key = "c0970e23404e1cd9306244fcf82fa453"
-    api_secret = "ab608af1987034a67e0f5f9d8ecd67d1"
+    creds = pickle.load( open( "api_config.p", "rb" ) )
+    api_key = creds['api_key']
+    api_secret = creds['api_secret']
     zip_code = '93063' #change to input 
 
     # Instantiate the client with your credentials.
@@ -104,13 +106,14 @@ def main():
             sub_image_detect = run_algo(pet)
         if sub_image_detect > 0:
             write_DescTable(pet)
-            write_nameTable(pet)
+            write_nameTable(pet,sub_image_detect)
             write_contactInfo(pet)
             image_detect+=1
         if image_detect % 10 == 0:
             print 'images detected: ' + str(image_detect)
             print 'cats looped: ' + str(cat)
-            
+        if image_detect == 500:
+            quit()
             
 if __name__ == "__main__":
     main()
