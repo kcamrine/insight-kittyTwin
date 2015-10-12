@@ -129,7 +129,9 @@ def show(id):
 def show_loading(id):
     return send_from_directory('/static/images', "loading.gif")
 
-
+@app.route('/slides')
+def send_slides():
+    return send_from_directory('/Users/kamrine/Documents/projects/Insight/insight-kittyTwin/app/static/images', 'slides.pdf')
 
 @app.route('/retry',methods=['GET','POST'])
 def no_face_detected():
