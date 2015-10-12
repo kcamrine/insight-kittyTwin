@@ -26,7 +26,7 @@ def ensure_dir(f): #this doesn't work
 
 def detect(path):
     img = cv2.imread(path)
-    cascade = cv2.CascadeClassifier("/usr/local/Cellar/opencv/2.4.12/share/OpenCV/haarcascades/haarcascade_frontalcatface.xml") #need to change this so it's not looking locally on my machine
+    cascade = cv2.CascadeClassifier("haarcascade_frontalcatface.xml") #need to change this so it's not looking locally on my machine
     rects = cascade.detectMultiScale(img, 1.4, 6, cv2.cv.CV_HAAR_SCALE_IMAGE, (20,20))
     if len(rects) == 0:
         return [], img
@@ -44,7 +44,7 @@ def box(rects, img, file_name_base):
         file_name = file_name + str(i) + '.jpg'
         file_name = file_name.replace('\n','')
 #        print 'Writing ' + file_name
-        cv2.imwrite('detected/' + str(file_name), cut)   #   Write the file
+        cv2.imwrite(str(sys.argv[2]) + str(file_name), cut)   #   Write the file
         i += 1  #   Increment the face counter
     return i
 
@@ -88,7 +88,7 @@ def main():
     creds = pickle.load( open( "api_config.p", "rb" ) )
     api_key = creds['api_key']
     api_secret = creds['api_secret']
-    zip_code = '93063' #change to input 
+    zip_code = sys.argv[1] #change to input 
 
     # Instantiate the client with your credentials.
     api = petfinder.PetFinderClient(api_key=api_key, api_secret=api_secret)
